@@ -60,7 +60,7 @@ public class AuthPropertiesDTO implements Serializable {
     @Schema(example = "\"CX-CRISK\":{\"roles\":[\"GetUser\"]}")
     @NotNull
     @JsonProperty("resource_access")
-    private Object resourceAccess = new LinkedHashMap<>();
+    private Object resourceAccess = "";
 
     @Schema(example = "12XRisk")
     @NotNull

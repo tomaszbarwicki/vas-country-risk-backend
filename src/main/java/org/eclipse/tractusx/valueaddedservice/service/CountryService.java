@@ -61,12 +61,6 @@ public class CountryService {
         return countryRepository.findByCountry(countryName).map(countryMapper::toDto);
     }
 
-    @Transactional(readOnly = true)
-    public Optional<CountryDTO> findCountryByIso2(String iso2){
-        return countryRepository.findByIso2(iso2).map(countryMapper::toDto);
-    }
-
-
 
 
     /**

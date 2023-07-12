@@ -19,26 +19,17 @@
 ********************************************************************************/
 package org.eclipse.tractusx.valueaddedservice.rest;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.tractusx.valueaddedservice.ValueAddedServiceApplication;
-import org.eclipse.tractusx.valueaddedservice.config.ApplicationVariables;
-import org.eclipse.tractusx.valueaddedservice.dto.AuthPropertiesDTO;
 import org.eclipse.tractusx.valueaddedservice.dto.DashBoardTableDTO;
 import org.eclipse.tractusx.valueaddedservice.dto.DashBoardWorldMapDTO;
 import org.eclipse.tractusx.valueaddedservice.dto.RatingDTO;
-import org.eclipse.tractusx.valueaddedservice.utils.MockUtilsTest;
 import org.eclipse.tractusx.valueaddedservice.utils.PostgreSQLContextInitializer;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.Resource;
@@ -57,11 +48,9 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.mockito.Mockito.when;
 
 @Slf4j
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,classes = ValueAddedServiceApplication.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,classes = ValueAddedServiceApplication.class)
 @ContextConfiguration(initializers = PostgreSQLContextInitializer.class)
 class DashBoardResourceIntegrationTest {
 
@@ -74,36 +63,6 @@ class DashBoardResourceIntegrationTest {
 
     @Autowired
     ObjectMapper objectMapper;
-
-    @MockBean
-    ApplicationVariables applicationVariables;
-
-    MockUtilsTest mockUtilsTest;
-
-    @BeforeAll
-    public void beforeAll() {
-        mockUtilsTest = new MockUtilsTest();
-        mockUtilsTest.beforeAll();
-    }
-
-
-    @BeforeEach
-    public void setUp() throws JsonProcessingException {
-        mockUtilsTest.openPorts();
-        AuthPropertiesDTO authPropertiesDTO = new AuthPropertiesDTO();
-        authPropertiesDTO.setCompanyName("TestCompany");
-        authPropertiesDTO.setEmail("test@email.com");
-        authPropertiesDTO.setName("TestName");
-
-        ObjectMapper mapper = new ObjectMapper();
-        String json = "{ \"Cl16-CX-CRisk\": { \"roles\": [ \"User\", \"Company Admin\", \"read_suppliers\", \"read_customers\" ] } }";
-        Map<String, Object> map = mapper.readValue(json, new TypeReference<>() {
-        });
-        authPropertiesDTO.setResourceAccess(map);
-
-        when(applicationVariables.getAuthPropertiesDTO()).thenReturn(authPropertiesDTO);
-    }
-
 
 
     private Map<String,Object> getMap() throws IOException {
@@ -126,7 +85,6 @@ class DashBoardResourceIntegrationTest {
     @Test
     @Transactional
     void getTableInfo() throws Exception {
-
 
         Map<String,Object> map = getMap();
         UriTemplate uritemplate= new UriTemplate("/api/dashboard/getTableInfo?year={year}&ratings[]={ratings}&name={name}&companyName={companyName}&email={email}");
@@ -178,7 +136,6 @@ class DashBoardResourceIntegrationTest {
     @Test
     @Transactional
     void getTableInfoInfoWithRatingTwoExistRating() throws Exception {
-
         RatingDTO ratingDTO = new RatingDTO();
         ratingDTO.setDataSourceName("Economist Intelligence Unit Country Ratings");
         ratingDTO.setWeight(50F);

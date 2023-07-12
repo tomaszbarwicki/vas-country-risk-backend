@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -45,11 +46,11 @@ public class CountryLogicService {
     ExternalBusinessPartnersLogicService externalBusinessPartnersLogicService;
 
 
-    @Cacheable(value = "vas-country", key = "{#root.methodName , {#companyUserDTO.name,#companyUserDTO.email,#companyUserDTO.companyName},#roles }", unless = "#result == null")
-    public List<CountryDTO> getAssociatedCountries (CompanyUserDTO companyUserDTO,String token,List<String> roles) {
+    @Cacheable(value = "vas-country", key = "{#root.methodName , {#companyUserDTO.name,#companyUserDTO.email,#companyUserDTO.companyName}}", unless = "#result == null")
+    public List<CountryDTO> getAssociatedCountries (CompanyUserDTO companyUserDTO) {
         log.debug("getAssociatedCountries filtered by companyUserDTO " + companyUserDTO);
         List<String> countryList;
-        countryList = externalBusinessPartnersLogicService.getExternalPartnersCountry(companyUserDTO,token,roles);
+        countryList = externalBusinessPartnersLogicService.getExternalPartnersCountry(companyUserDTO);
 
         List<CountryDTO> countryDTOS;
         countryDTOS = countryService.findByCountryIn(countryList);
@@ -59,11 +60,11 @@ public class CountryLogicService {
 
 
     
-    @Cacheable(value = "vas-country", key = "{#root.methodName , {#companyUserDTO.name,#companyUserDTO.email,#companyUserDTO.companyName},#roles}", unless = "#result == null")
-    public List<CountryDTO> getCountryFilterByISO2(CompanyUserDTO companyUserDTO,String token,List<String> roles){
+    @Cacheable(value = "vas-country", key = "{#root.methodName , {#companyUserDTO.name,#companyUserDTO.email,#companyUserDTO.companyName}}", unless = "#result == null")
+    public List<CountryDTO> getCountryFilterByISO2(CompanyUserDTO companyUserDTO){
         log.debug("getCountryFilterByISO2 filtered by companyUserDTO "+ companyUserDTO);
-        List<CountryDTO> countryDTOList = countryService.findAll().stream().filter(MethodUtils.distinctByKey(CountryDTO::getIso2)).toList();
-        countryDTOList.forEach(countryDTO -> countryDTO.setTotalBpn(externalBusinessPartnersLogicService.getTotalBpnByCountry(countryDTO,companyUserDTO,token,roles)));
+        List<CountryDTO> countryDTOList = countryService.findAll().stream().filter(MethodUtils.distinctByKey(CountryDTO::getIso2)).collect(Collectors.toList());
+        countryDTOList.forEach(countryDTO -> countryDTO.setTotalBpn(externalBusinessPartnersLogicService.getTotalBpnByCountry(countryDTO,companyUserDTO)));
 
         return countryDTOList;
     }
@@ -72,29 +73,16 @@ public class CountryLogicService {
     @Cacheable(value = "vas-country", key = "{#root.methodName , #countryName}", unless = "#result == null")
     public CountryDTO findCountryByName(String countryName){
         Optional<CountryDTO> countryDTO = countryService.findCountryByName(countryName);
-        log.debug("findCountryByName filtered by countryName");
+        log.debug("findCountryByName filtered by countryName " + countryName);
         if(countryDTO.isPresent()){
             return countryDTO.get();
         }else{
-            log.error("Country does not exists on country table");
+            log.error("Country does not exists on country table " + countryName);
             return new CountryDTO();
         }
 
-    }
-
-    @Cacheable(value = "vas-country", key = "{#root.methodName , #iso2}", unless = "#result == null")
-    public CountryDTO findCountryByIso2(String iso2){
-        Optional<CountryDTO> countryDTO = countryService.findCountryByIso2(iso2);
-        log.debug("findCountryByIso2 filtered by iso2");
-        if(countryDTO.isPresent()){
-            return countryDTO.get();
-        }else{
-            log.error("Country does not exists on country table");
-            return new CountryDTO();
-        }
 
     }
-
 
     @CacheEvict(value = "vas-country", allEntries = true)
     public void invalidateAllCache() {

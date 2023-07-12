@@ -40,22 +40,21 @@ public class WorldMapAndTableLogicService {
     @Autowired
     DataSourceValueService dataSourceValueService;
 
+    @Autowired
+    CountryLogicService countryLogicService;
 
     @Autowired
     ExternalBusinessPartnersLogicService externalBusinessPartnersLogicService;
 
-    @Autowired
-    BusinessPartnersLogicService businessPartnersLogicService;
 
-
-    public List<DashBoardTableDTO> getTableInfo(Integer year, List<RatingDTO> ratingDTOList, CompanyUserDTO companyUser,String token,List<String> roles) {
+    public List<DashBoardTableDTO> getTableInfo(Integer year, List<RatingDTO> ratingDTOList, CompanyUserDTO companyUser) {
         log.debug("Request to get Table Info");
         List<String> dataSources = ratingDTOList.stream().map(RatingDTO::getDataSourceName).toList();
         List<DataDTO> dataDTOS = new ArrayList<>();
 
         List<BusinessPartnerDTO> businessPartnerDTOS;
-        businessPartnerDTOS = businessPartnersLogicService.getExternalBusinessPartners(companyUser,token,roles);
-        List<String> countryList = externalBusinessPartnersLogicService.getExternalPartnersCountry(companyUser,token,roles);
+        businessPartnerDTOS = externalBusinessPartnersLogicService.getExternalBusinessPartners(companyUser);
+        List<String> countryList = externalBusinessPartnersLogicService.getExternalPartnersCountry(companyUser);
 
         if (!dataSources.isEmpty() && year != null && year > 0) {
             dataDTOS = dataSourceValueService.findByRatingAndCountryAndScoreGreaterThanAndYear(Float.valueOf(-1), countryList, dataSources, year);
@@ -149,8 +148,6 @@ public class WorldMapAndTableLogicService {
         dashBoardTableDTO.setId(Long.valueOf(id));
         dashBoardTableDTO.setLatitude(businessPartnerDTO.getLatitude());
         dashBoardTableDTO.setLongitude(businessPartnerDTO.getLongitude());
-        dashBoardTableDTO.setCustomer(businessPartnerDTO.getCustomer());
-        dashBoardTableDTO.setSupplier(businessPartnerDTO.getSupplier());
         return dashBoardTableDTO;
     }
 

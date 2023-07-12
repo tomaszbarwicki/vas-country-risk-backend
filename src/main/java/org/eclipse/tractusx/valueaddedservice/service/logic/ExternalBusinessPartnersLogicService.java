@@ -19,15 +19,24 @@
 ********************************************************************************/
 package org.eclipse.tractusx.valueaddedservice.service.logic;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.tractusx.valueaddedservice.config.ApplicationVariables;
 import org.eclipse.tractusx.valueaddedservice.dto.BusinessPartnerDTO;
 import org.eclipse.tractusx.valueaddedservice.dto.CompanyUserDTO;
 import org.eclipse.tractusx.valueaddedservice.dto.CountryDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -36,15 +45,42 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ExternalBusinessPartnersLogicService {
 
+    @Autowired
+    ObjectMapper objectMapper;
+
+    @Value(value = "classpath:config/liquibase/fake-data/dashboard.json")
+    private Resource json;
+
+    @Value("${application.partnersPoolUrl.legalEntities}")
+    private String legalEntitiesUrl;
 
     @Autowired
-    BusinessPartnersLogicService businessPartnersLogicService;
+    ApplicationVariables applicationVariables;
+
+    @Autowired
+    InvokeService invokeService;
+
     
-    @Cacheable(value = "vas-bpn", key = "{#root.methodName , {#companyUserDTO.name,#companyUserDTO.email,#companyUserDTO.companyName},#roles}", unless = "#result == null")
-    public List<String> getExternalPartnersCountry (CompanyUserDTO companyUserDTO,String token,List<String> roles) {
+    @Cacheable(value = "vas-bpn", key = "{#root.methodName , {#companyUser.name,#companyUser.email,#companyUser.companyName}}", unless = "#result == null")
+    public List<BusinessPartnerDTO> getExternalBusinessPartners(CompanyUserDTO companyUser) {
+        log.debug("getExternalBusinessPartners for companyUserDTO {}",companyUser);
+        try {
+            var headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(applicationVariables.getToken());
+            HttpEntity<Object> httpEntity = new HttpEntity<>(headers);
+            return objectMapper.readValue(json.getInputStream(), new TypeReference<>() {
+            });
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    @Cacheable(value = "vas-bpn", key = "{#root.methodName , {#companyUserDTO.name,#companyUserDTO.email,#companyUserDTO.companyName}}", unless = "#result == null")
+    public List<String> getExternalPartnersCountry (CompanyUserDTO companyUserDTO) {
         log.debug("getExternalPartnersCountry for companyUserDTO {}",companyUserDTO);
         List<BusinessPartnerDTO> businessPartnerDTOS;
-        businessPartnerDTOS = businessPartnersLogicService.getExternalBusinessPartners(companyUserDTO,token,roles);
+        businessPartnerDTOS = getExternalBusinessPartners(companyUserDTO);
         List<String> countryList = new ArrayList<>();
         countryList.addAll(businessPartnerDTOS.stream().map(BusinessPartnerDTO::getCountry)
                 .collect(Collectors.toSet()));
@@ -52,10 +88,10 @@ public class ExternalBusinessPartnersLogicService {
     }
 
     
-    @Cacheable(value = "vas-bpn", key = "{#root.methodName , {#countryDTO.iso3, #companyUserDTO.name,#companyUserDTO.email,#companyUserDTO.companyName},#roles}", unless = "#result == null")
-    public Long getTotalBpnByCountry(CountryDTO countryDTO,CompanyUserDTO companyUserDTO,String token,List<String> roles){
+    @Cacheable(value = "vas-bpn", key = "{#root.methodName , {#countryDTO.iso3, #companyUserDTO.name,#companyUserDTO.email,#companyUserDTO.companyName}}", unless = "#result == null")
+    public Long getTotalBpnByCountry(CountryDTO countryDTO,CompanyUserDTO companyUserDTO){
         log.debug("getTotalBpnByCountry filtered by country {} and companyUser {}",countryDTO,companyUserDTO);
-        List<BusinessPartnerDTO> businessPartnerDTOS = businessPartnersLogicService.getExternalBusinessPartners(companyUserDTO,token,roles);
+        List<BusinessPartnerDTO> businessPartnerDTOS = getExternalBusinessPartners(companyUserDTO);
         return  businessPartnerDTOS.stream().filter(businessPartnerDTO -> businessPartnerDTO.getCountry().equalsIgnoreCase(countryDTO.getCountry())).count();
 
     }

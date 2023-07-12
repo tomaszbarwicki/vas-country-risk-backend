@@ -20,7 +20,6 @@
 package org.eclipse.tractusx.valueaddedservice.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.tractusx.valueaddedservice.config.ApplicationVariables;
 import org.eclipse.tractusx.valueaddedservice.domain.DataSource;
 import org.eclipse.tractusx.valueaddedservice.dto.*;
 import org.eclipse.tractusx.valueaddedservice.dto.ShareDTOs.ShareDTO;
@@ -73,15 +72,8 @@ public class DashboardService {
     @Autowired
     ShareLogicService shareLogicService;
 
-    @Autowired
-    ApplicationVariables applicationVariables;
-
-    @Autowired
-    BusinessPartnersLogicService businessPartnersLogicService;
-
     public List<DashBoardTableDTO> getTableInfo(Integer year, List<RatingDTO> ratingDTOList, CompanyUserDTO companyUser) {
-        return worldMapAndTableLogicService.getTableInfo(year, ratingDTOList, companyUser,applicationVariables.getToken(),
-                applicationVariables.getAuthPropertiesDTO().getRoles(applicationVariables.getAuthPropertiesDTO().getClientResource()));
+        return worldMapAndTableLogicService.getTableInfo(year, ratingDTOList, companyUser);
     }
 
     public List<DashBoardWorldMapDTO> getWorldMapInfo(Integer year, List<RatingDTO> ratingDTOList, CompanyUserDTO companyUser) {
@@ -120,21 +112,16 @@ public class DashboardService {
     }
 
     public List<CountryDTO> getCountryFilterByISO2(CompanyUserDTO companyUserDTO) {
-        return countryLogicService.getCountryFilterByISO2(companyUserDTO,
-                applicationVariables.getToken(),
-                applicationVariables.getAuthPropertiesDTO().getRoles(applicationVariables.getAuthPropertiesDTO().getClientResource()));
+        return countryLogicService.getCountryFilterByISO2(companyUserDTO);
     }
 
     public List<BusinessPartnerDTO> getExternalBusinessPartners(CompanyUserDTO companyUserDTO) {
-        return businessPartnersLogicService.getExternalBusinessPartners(companyUserDTO,applicationVariables.getToken(),
-                applicationVariables.getAuthPropertiesDTO().getRoles(applicationVariables.getAuthPropertiesDTO().getClientResource()));
+        return externalBusinessPartnersLogicService.getExternalBusinessPartners(companyUserDTO);
 
     }
 
     public List<CountryDTO> getCountryByAssociatedBPtoUser(CompanyUserDTO companyUserDTO) {
-        return countryLogicService.getAssociatedCountries(companyUserDTO,
-                applicationVariables.getToken(),
-                applicationVariables.getAuthPropertiesDTO().getRoles(applicationVariables.getAuthPropertiesDTO().getClientResource()));
+        return countryLogicService.getAssociatedCountries(companyUserDTO);
     }
 
     public List<ReportDTO> getReportsByCompanyUser(CompanyUserDTO companyUserDTO) {
@@ -175,8 +162,7 @@ public class DashboardService {
     }
 
     public List<ShareDTO> findRatingsScoresForEachBpn(List<DataSourceDTO> datasource, List<BusinessPartnerDTO> businessPartner, CompanyUserDTO companyUser) {
-        return shareLogicService.findRatingsScoresForEachBpn(datasource, businessPartner ,companyUser,applicationVariables.getToken(),
-                applicationVariables.getAuthPropertiesDTO().getRoles(applicationVariables.getAuthPropertiesDTO().getClientResource()));
+        return shareLogicService.findRatingsScoresForEachBpn(datasource, businessPartner ,companyUser);
     }
 
     public void deleteReportFromUserById(Long reportId,CompanyUserDTO companyUserDTO)  {
